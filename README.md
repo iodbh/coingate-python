@@ -28,5 +28,8 @@ placed_order = client.create_order(new_order)
 print(placed_order.payment_url)
 
 # List orders :
+orders = list(client.iterate_all_orders())
 
+# Get an order by id:
+order = orders[0].coinbase_id
 ```
