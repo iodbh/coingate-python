@@ -31,5 +31,5 @@ print(placed_order.payment_url)
 orders = list(client.iterate_all_orders())
 
 # Get an order by id:
-order = orders[0].coinbase_id
+order = orders[0].coingate_id
 ```
