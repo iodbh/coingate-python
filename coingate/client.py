@@ -15,7 +15,7 @@ class CoinGateOrder:
 
     def __init__(self, order_id, price, currency, receive_currency=None, title=None,
                  description=None, callback_url=None, cancel_url=None,
-                 success_url=None, coinbase_id=None, status=None,
+                 success_url=None, coingate_id=None, status=None,
                  created_at=None, expire_at=None, payment_url=None,
                  btc_amount=None, bitcoin_address=None, bitcoin_uri=None):
         """Inits a CoinGateOrder instance/
@@ -41,7 +41,7 @@ class CoinGateOrder:
                 status is changed.
             cancel_url: Redirect to Merchant URL when buyer canceled order.
             success_url: Redirect to Merchant URL after successful payment.
-            coinbase_id: CoinGate-assigned ID of the order.
+            coingate_id: CoinGate-assigned ID of the order.
             status: Order status.
             created_at: Order creation date. Arrow object.
             expire_at: Order expiration date.
@@ -64,7 +64,7 @@ class CoinGateOrder:
         self.callback_url = callback_url
         self.cancel_url = cancel_url
         self.success_url = success_url
-        self.coinbase_id = coinbase_id
+        self.coingate_id = coingate_id
         self.status = status
         self.created_at = created_at
         self.expire_at = expire_at
@@ -74,8 +74,8 @@ class CoinGateOrder:
         self.bitcoin_uri = bitcoin_uri
 
     def __str__(self):
-        if self.coinbase_id is not None:
-            return "<CoinGate Order {} ({})>".format(self.order_id, self.coinbase_id)
+        if self.coingate_id is not None:
+            return "<CoinGate Order {} ({})>".format(self.order_id, self.coingate_id)
         return "<CoinGate Order {}>".format(self.order_id)
 
     @classmethod
@@ -83,7 +83,7 @@ class CoinGateOrder:
         """Creates an CoinGateOrder instance from data returned by the API.
 
         This is used for creating an instance based on an order that has been
-        created on Coinbase. As such, the receive_currency shouldn't be set.
+        created on Coingate. As such, the receive_currency shouldn't be set.
 
         Args:
             rdata: a Dict of data returned by the CoinGate API.
@@ -101,7 +101,7 @@ class CoinGateOrder:
             callback_url=rdata.get("callback_url", None),
             cancel_url=rdata.get("cancel_url", None),
             success_url=rdata.get("success_url", None),
-            coinbase_id=rdata.get("id", None),
+            coingate_id=rdata.get("id", None),
             status=rdata.get("status", None),
             created_at=arrow.get(rdata["created_at"]),
             expire_at=arrow.get(rdata["expire_at"]),
