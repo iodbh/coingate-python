@@ -1,3 +1,6 @@
+from os import linesep
+
+
 class CoinGateException(Exception):
     """Parent class for CoinGate exceptions.
     """
@@ -15,6 +18,9 @@ class CoinGateAPIException(CoinGateException):
 
         # Now for your custom code...
         self.response = response
+        self.api_reason = response["reason"]
+        self.api_message = response["message"]
+        self.api_errors = response.get("errors", [])
 
     @classmethod
     def from_response_dict(cls, dict, status):
@@ -32,7 +38,7 @@ class CoinGateAPIException(CoinGateException):
         return cls(message, dict)
 
     def __repr__(self):
-        return "{} ({}): {}".format(self.api_reason, self.api_status, self.api_message)
+        return "{}: {}{}{}".format(self.api_reason, self.api_message, linesep, linesep.join(self.api_errors))
 
 
 class CoinGateClientException(CoinGateException):
