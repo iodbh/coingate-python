@@ -25,7 +25,7 @@ here = path.abspath(path.dirname(__file__))
 
 setup(
     name='coingate',
-    version='0.0.1.dev2',
+    version='0.0.2.dev1',
 
     description='Basic CoinGate API client',
     long_description=long_description,

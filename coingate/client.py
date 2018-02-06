@@ -180,7 +180,7 @@ class CoinGateClient:
 
         nonce = str(int(time.time() * 1e6))
         message = str(nonce) + str(self.app_id) + self.api_key
-        signature = hmac.new(self.api_secret, message, hashlib.sha256).hexdigest()
+        signature = hmac.new(str(self.api_secret), str(message), hashlib.sha256).hexdigest()
 
         headers = {
             'Access-Nonce': nonce,
