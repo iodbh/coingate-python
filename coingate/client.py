@@ -152,15 +152,17 @@ class CoinGateClient:
     """CoinGate API client.
     """
 
-    def __init__(self, app_id, api_key, api_secret, env="sandbox", api_version="1"):
+    def __init__(self, app_id, api_key, api_secret, env="sandbox", api_version="1", test_api_hostname=None):
 
         # Construct the base URL for API requests
         if env == "sandbox":
             hostname = SANDBOX_HOSTNAME
         elif env == "live":
             hostname = LIVE_HOSTNAME
+        elif env == "test":
+            hostname = test_api_hostname
         else:
-            raise CoinGateClientException('Invalid environment, please specify either "live" or "sandbox"')
+            raise CoinGateClientException('Invalid environment, please specify either "live", "sandbox" or "test"')
 
         self.base_path = '/v{}'.format(api_version)
         base_url_components = ('https', hostname, self.base_path, '', '', '')
