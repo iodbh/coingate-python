@@ -153,7 +153,7 @@ class CoinGateClient:
     """
 
     def __init__(self, app_id, api_key, api_secret, env="sandbox", api_version="1", test_api_hostname=None):
-
+        self.ssl_verify = True
         # Construct the base URL for API requests
         if env == "sandbox":
             hostname = SANDBOX_HOSTNAME
@@ -161,6 +161,7 @@ class CoinGateClient:
             hostname = LIVE_HOSTNAME
         elif env == "test":
             hostname = test_api_hostname
+            self.ssl_verify = False
         else:
             raise CoinGateClientException('Invalid environment, please specify either "live", "sandbox" or "test"')
 
@@ -199,10 +200,10 @@ class CoinGateClient:
 
         try:
             if request_method == 'get':
-                req = requests.get(url, headers=headers, params=params)
+                req = requests.get(url, headers=headers, params=params, verify=self.ssl_verify)
             elif request_method == 'post':
                 headers['Content-Type'] = 'application/x-www-form-urlencoded'
-                req = requests.post(url, data=params, headers=headers)
+                req = requests.post(url, data=params, headers=headers, verify=self.ssl_verif)
             status_code, parsed_response = req.status_code, req.json()
         except requests.RequestException as e:
             raise CoinGateClientException("The connection failed: {}".format(e.message))
