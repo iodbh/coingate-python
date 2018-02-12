@@ -203,7 +203,7 @@ class CoinGateClient:
                 req = requests.get(url, headers=headers, params=params, verify=self.ssl_verify)
             elif request_method == 'post':
                 headers['Content-Type'] = 'application/x-www-form-urlencoded'
-                req = requests.post(url, data=params, headers=headers, verify=self.ssl_verif)
+                req = requests.post(url, data=params, headers=headers, verify=self.ssl_verify)
             status_code, parsed_response = req.status_code, req.json()
         except requests.RequestException as e:
             raise CoinGateClientException("The connection failed: {}".format(e.message))
