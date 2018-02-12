@@ -126,7 +126,7 @@ class CoinGateOrder:
             "description": self.description,
             "callback_url": self.callback_url,
             "cancel_url": self.cancel_url,
-            "success_url": self.success_url"
+            "success_url": self.success_url
         }
 
         return rdata
