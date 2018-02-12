@@ -122,11 +122,11 @@ class CoinGateOrder:
             "price": self.price,
             "currency": self.currency,
             "receive_currency" : self.receive_currency,
-            "title": "",
-            "description": "",
-            "callback_url": "",
-            "cancel_url": "",
-            "success_url": ""
+            "title": self.title,
+            "description": self.description,
+            "callback_url": self.callback_url,
+            "cancel_url": self.cancel_url,
+            "success_url": self.success_url"
         }
 
         return rdata
