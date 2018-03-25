@@ -251,8 +251,34 @@ class CoinGateClient:
             order: CoinGateOrder instance for the new payment.
 
         Returns:
-
+            CoinGateOrder instance with fields populated from the Coingate Response.
         """
         route = '/orders'
         response = self.api_request(route, 'post', params=order.to_request_data())
         return CoinGateOrder.from_response_data(response)
+
+    def get_rates(self, category=None, subcategory=None):
+        """
+
+        Args:
+            category: Rates category to fetch. Defaults to all. Can be one of
+                "merchant" or "trader"
+            subcategory: subcategory for the "trader" category. One of "buy" or
+            "sell"
+
+        Returns:
+            Rates dictionary.
+        """
+        route = '/rates'
+        if category not in ('merchant', 'trader', None):
+            raise CoinGateClientException('Rates category must be "merchant", "trader" or None')
+        if subcategory is not None and category != 'trader':
+            raise CoinGateClientException('Only the "trader" category supports a subcategory')
+        if subcategory not in ('buy', 'sell', None):
+            raise CoinGateClientException('Subcategory must be "buy", "sell" or None')
+        if category is not None:
+            route = '{}/{}'.format(route, category)
+        if subcategory is not None:
+            route = '{}/{}'.format(route, subcategory)
+        response = self.api_request(route, 'get')
+        return response
