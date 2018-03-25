@@ -175,7 +175,7 @@ class CoinGateClient:
         self.api_key = api_key
         self.api_secret = api_secret
 
-    def api_request(self, route, request_method='get', params=None):
+    def api_request(self, route, request_method='get', params=None, raw=False):
         if params is None:
             params = {}
 
@@ -204,7 +204,10 @@ class CoinGateClient:
             elif request_method == 'post':
                 headers['Content-Type'] = 'application/x-www-form-urlencoded'
                 req = requests.post(url, data=params, headers=headers, verify=self.ssl_verify)
-            status_code, parsed_response = req.status_code, req.json()
+            if not raw:
+                status_code, parsed_response = req.status_code, req.json()
+            else:
+                status_code, parsed_response = req.status_code, req.text
         except requests.RequestException as e:
             raise CoinGateClientException("The connection failed: {}".format(e.message))
 
@@ -259,6 +262,7 @@ class CoinGateClient:
 
     def get_rates(self, category=None, subcategory=None):
         """
+        Gets the list of CoinGate exchange rates.
 
         Args:
             category: Rates category to fetch. Defaults to all. Can be one of
@@ -282,3 +286,20 @@ class CoinGateClient:
             route = '{}/{}'.format(route, subcategory)
         response = self.api_request(route, 'get')
         return response
+
+    def get_rate(self, from_, to):
+        """
+        Gets the CoingGate's exchange rate for a currency pair.
+
+        Args:
+            from_: symbol of the currency to exchange from
+            to: symbol of the currency to exchange to
+
+        Returns:
+            CoinGate exchange rate (Float)
+        """
+        route = '/rates/merchant/{}/{}'.format(from_, to)
+        response = self.api_request(route, 'get', raw=True)
+        if not len(response):
+            raise CoinGateClientException("No exchange rate available for the {}{} pair".format(from_, to))
+        return float(response)
