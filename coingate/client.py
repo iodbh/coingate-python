@@ -56,9 +56,10 @@ class CoinGateBaseOrder:
         for fname, f in cls.fields_translation.items():
             if f.get('required', False) and fname not in rdata:
                 raise CoinGateClientException('Field {} is required and missing'.format(fname))
-            if f.get('validate', None) is not None and not f['validate'](rdata[fname]):
-                raise CoinGateClientException('Field {} has invalid value'.format(fname))
-            args[f.get('property_name', fname)] = f.get('casting', str)(rdata.get(fname, None))
+            if fname in rdata:
+                if (f.get('validate', None) is not None) and (not f['validate'](rdata[fname])):
+                    raise CoinGateClientException('Field {} has invalid value'.format(fname))
+                args[f.get('property_name', fname)] = f.get('casting', str)(rdata[fname])
 
         return cls(**args)
 
@@ -71,6 +72,7 @@ class CoinGateV1Order(CoinGateBaseOrder):
         'order_id': {'required': True},
         'price': {'casting': float, 'required': True},
         'currency': {'required': True},
+        'receive_currency': {},
         'title': {'validate': lambda x: x <= 150},
         'description': {'validate': lambda x: x <= 500},
         'callback_url': {},
@@ -192,6 +194,7 @@ class CoinGateV2Order(CoinGateBaseOrder):
     fields_translation = {
         'order_id': {'required': True},
         'price_currency': {'required': True},
+        'receive_currency': {},
         'price_amount': {'casting': float, 'required': True},
         'title': {'validate': lambda x: x <= 150},
         'description': {'validate': lambda x: x <= 500},
@@ -367,15 +370,11 @@ class CoingateBaseClient:
         current_page = 1
         while has_next:
 
-            print('current page: {}'.format(current_page))
             response = self.list_orders(page=current_page, per_page=per_page, sort_by=sort_by)
-            print('total pages: {}'.format(response["total_pages"]))
-            print('total pages: {}'.format(type(response["total_pages"])))
             for order in response["orders"]:
                 yield order
             if current_page < response["total_pages"]:
                 has_next = True
-                print(has_next)
                 current_page += 1
             else:
                 has_next = False
@@ -459,7 +458,7 @@ class CoinGateV1Client(CoingateBaseClient):
 
     def __init__(self, app_id, api_key, api_secret, env="sandbox"):
 
-        CoingateBaseClient.__init__(app_id, env, api_version=1)
+        CoingateBaseClient.__init__(self, app_id, env, api_version=1)
 
         # Auth
         self.app_id = app_id
@@ -479,13 +478,13 @@ class CoinGateV1Client(CoingateBaseClient):
             }
 
 
-class CoingateV2Client(CoingateBaseClient):
+class CoinGateV2Client(CoingateBaseClient):
 
     order_class = CoinGateV2Order
 
     def __init__(self, app_id, api_token, env="sandbox"):
 
-        CoingateBaseClient.__init__(app_id, env, 2)
+        CoingateBaseClient.__init__(self, app_id, env, 2)
 
         self.api_token = api_token
 
