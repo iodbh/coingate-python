@@ -164,6 +164,10 @@ class CoinGateV1Order(CoinGateBaseOrder):
             "success_url": self.success_url
         }
 
+        for field in tuple(rdata.keys()):
+            if rdata[field] is None:
+                del rdata[field]
+
         return rdata
 
     @classmethod
@@ -273,15 +277,20 @@ class CoinGateV2Order(CoinGateBaseOrder):
             "description": self.description,
             "callback_url": self.callback_url,
             "cancel_url": self.cancel_url,
-            "success_url": self.success_url
+            "success_url": self.success_url,
+            "token": self.token,
         }
+
+        for field in tuple(rdata.keys()):
+            if rdata[field] is None:
+                del rdata[field]
 
         return rdata
 
     @classmethod
     def new(cls, order_id, price_amount, price_currency, receive_currency, title=None,
             description=None, callback_url=None, cancel_url=None,
-            success_url=None):
+            success_url=None, token=None):
         """Constructs a new order.
 
             This is a helper function that only takes the arguments relevant to
@@ -292,7 +301,7 @@ class CoinGateV2Order(CoinGateBaseOrder):
         """
 
         return cls(order_id, price_amount, price_currency, receive_currency, title,
-                   description, callback_url, cancel_url, success_url)
+                   description, callback_url, cancel_url, success_url, token=token)
 
 
 class CoingateBaseClient:
