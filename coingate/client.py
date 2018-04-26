@@ -9,7 +9,61 @@ from .constants import LIVE_HOSTNAME, SANDBOX_HOSTNAME, ORDER_SORT_TYPES
 from .exceptions import CoinGateAPIException, CoinGateClientException
 
 
-class CoinGateOrder:
+class CoinGateBaseOrder:
+    """Base class for CoinGate orders
+
+    the fields_translation dictionary contains dictionaries that indicates
+    how fields returned by CoinGate's API relate to properties of the class.
+    Most of them have default arguments. Here are the keys and their possible
+    values :
+      -  The name of the field in Coingate's schema is given by the key
+      - "property_name": The corresponding property on the model. If not set,
+        defaults to the value of field_name
+      - "casting": function to be called to cast the value of the field.
+        defaults to str.
+      - "required": if set to True, will raise an exception if the field is
+        missing. Defaults to False.
+      - "validate": Function used to validate the data, should return a Boolean
+        (True if valid, False if invalid). No validation will occur if this is
+        set to None. Defaults to None.
+
+    Children classes are expected to have coingate_id and order_id properties
+    """
+
+    fields_translation = dict()
+
+    def __str__(self):
+        if self.coingate_id is not None:
+            return "<CoinGate Order {} ({})>".format(self.order_id, self.coingate_id)
+        return "<CoinGate Order {}>".format(self.order_id)
+
+    @classmethod
+    def from_response_data(cls, rdata):
+        """Creates an CoinGateOrder instance from data returned by the API.
+
+        This is used for creating an instance based on an order that has been
+        created on Coingate. As such, the receive_currency shouldn't be set.
+
+        Args:
+            rdata: a Dict of data returned by the CoinGate API.
+
+        Returns:
+            A CoinGateOrder instance created from the request data.
+        """
+
+        args = {}
+
+        for fname, f in cls.fields_translation.items():
+            if f.get('required', False) and fname not in rdata:
+                raise CoinGateClientException('Field {} is required and missing'.format(fname))
+            if f.get('validate', None) is not None and not f['validate'](rdata[fname]):
+                raise CoinGateClientException('Field {} has invalid value'.format(fname))
+            args[f.get('property_name', fname)] = f.get('casting', str)(rdata.get(fname, None))
+
+        return cls(**args)
+
+
+class CoinGateV1Order(CoinGateBaseOrder):
     """CoinGate Order.
     """
 
@@ -50,10 +104,6 @@ class CoinGateOrder:
             bitcoin_address: BTC address for payment.
             bitcoin_uri: BTC URI for payment.
         """
-        if title is not None and len(title) > 150:
-            raise CoinGateAPIException("Order title can't be longer than 150 characters.")
-        if description is not None and len(description) > 500:
-            raise CoinGateAPIException("Order description can't be longer than 500 characters.")
 
         self.order_id = order_id
         self.price = price
@@ -109,7 +159,6 @@ class CoinGateOrder:
             btc_amount=rdata["btc_amount"],
             bitcoin_address=rdata["bitcoin_address"],
             bitcoin_uri=rdata["bitcoin_uri"]
-
         )
 
     def to_request_data(self):
@@ -121,7 +170,7 @@ class CoinGateOrder:
             "order_id": self.order_id,
             "price": self.price,
             "currency": self.currency,
-            "receive_currency" : self.receive_currency,
+            "receive_currency": self.receive_currency,
             "title": self.title,
             "description": self.description,
             "callback_url": self.callback_url,
@@ -148,32 +197,142 @@ class CoinGateOrder:
                  description, callback_url, cancel_url, success_url)
 
 
-class CoinGateClient:
-    """CoinGate API client.
+class CoinGateV2Order(CoinGateBaseOrder):
+
+    fields_translation = {
+        'order_id': {'required': True},
+        'price_currency': {'required': True},
+        'price_amount': {'casting': float, 'required': True},
+        'title': {'validate': lambda x: x <= 150},
+        'description': {'validate': lambda x: x <= 500},
+        'callback_url': {},
+        'cancel_url': {},
+        'success_url': {},
+        'id': {'property_name': 'coingate_id', 'casting': int},
+        'status': {},
+        'created_at': {'casting': arrow.get},
+        'expire_at': { 'casting': arrow.get},
+        'payment_url': {},
+        'token': {},
+        'pay_currency': {},
+        'pay_amount': {'casting': float},
+    }
+
+    def __init__(self, order_id, price_amount, price_currency, receive_currency, title=None,
+                 description=None, callback_url=None, cancel_url=None,
+                 success_url=None, coingate_id=None, status=None,
+                 created_at=None, expire_at=None, payment_url=None, token=None,
+                 pay_currency=None, pay_amount=None):
+        """Inits a CoinGateOrder instance/
+
+        The positional arguments the fields required by the Coingate API when
+        creating an order.
+
+        All the arguments are Strings unless otherwise specified.
+
+        Args:
+            order_id: Merchant's custom order ID.
+            price_amount: Float. The price set by the merchant
+            price_currency: ISO 4217 currency code which defines the currency in
+                which you wish to price your merchandise; used to define price
+                parameter.
+            receive_currency:
+                ISO 4217 currency code which defines the currency in which you
+                wish to receive your payouts. Possible values: EUR, USD, BTC.
+            title: Max 150 characters.
+            description: More details about this order. Max 500 characters. It
+                can be cart items, product details or other comment.
+            callback_url: Send an automated message to Merchant URL when order
+                status is changed.
+            cancel_url: Redirect to Merchant URL when buyer canceled order.
+            success_url: Redirect to Merchant URL after successful payment.
+            coingate_id: CoinGate-assigned ID of the order.
+            status: Order status.
+            created_at: Order creation date. Arrow object.
+            expire_at: Order expiration date.
+            payment_url: Invoice URL for payment.
+            pay_currency: The currency used by the buyer.
+            pay_amount: the amount of pay_currency paid by the buyer.
+        """
+
+        self.order_id = order_id
+        self.price_amount = price_amount
+        self.price_currency = price_currency
+        self.receive_currency = receive_currency
+        self.title = title
+        self.description = description
+        self.callback_url = callback_url
+        self.cancel_url = cancel_url
+        self.success_url = success_url
+        self.coingate_id = coingate_id
+        self.status = status
+        self.created_at = created_at
+        self.expire_at = expire_at
+        self.payment_url = payment_url
+        self.token = token
+        self.pay_currency = pay_currency
+        self.pay_amount = pay_amount
+
+    def to_request_data(self):
+
+        if self.receive_currency is None:
+            raise CoinGateClientException("Can't serialize an Order without a receive_currency set.")
+
+        rdata = {
+            "order_id": self.order_id,
+            "price_amount": self.price_amount,
+            "price_currency": self.price_currency,
+            "receive_currency": self.receive_currency,
+            "title": self.title,
+            "description": self.description,
+            "callback_url": self.callback_url,
+            "cancel_url": self.cancel_url,
+            "success_url": self.success_url
+        }
+
+        return rdata
+
+    @classmethod
+    def new(cls, order_id, price_amount, price_currency, receive_currency, title=None,
+            description=None, callback_url=None, cancel_url=None,
+            success_url=None):
+        """Constructs a new order.
+
+            This is a helper function that only takes the arguments relevant to
+            the creation of a new order.
+
+        Returns:
+            New CoinGateOrder object.
+        """
+
+        return cls(order_id, price_amount, price_currency, receive_currency, title,
+                   description, callback_url, cancel_url, success_url)
+
+
+class CoingateBaseClient:
+    """CoinGate API client Base class.
     """
 
-    def __init__(self, app_id, api_key, api_secret, env="sandbox", api_version="1", test_api_hostname=None):
+    order_class = CoinGateBaseOrder
+
+    def __init__(self, app_id, env, api_version=1):
         self.ssl_verify = True
+        self.api_version = api_version
         # Construct the base URL for API requests
         if env == "sandbox":
             hostname = SANDBOX_HOSTNAME
         elif env == "live":
             hostname = LIVE_HOSTNAME
-        elif env == "test":
-            hostname = test_api_hostname
-            self.ssl_verify = False
         else:
-            raise CoinGateClientException('Invalid environment, please specify either "live", "sandbox" or "test"')
+            raise CoinGateClientException('Invalid environment, please specify either "live" or "sandbox"')
 
         self.base_path = '/v{}'.format(api_version)
         base_url_components = ('https', hostname, self.base_path, '', '', '')
         self.base_url = urlunparse(base_url_components)
 
-        # Auth
-
-        self.app_id = app_id
-        self.api_key = api_key
-        self.api_secret = api_secret
+    @property
+    def auth_headers(self):
+        pass
 
     def api_request(self, route, request_method='get', params=None, raw=False):
         if params is None:
@@ -181,15 +340,7 @@ class CoinGateClient:
 
         # Authentication
 
-        nonce = str(int(time.time() * 1e6))
-        message = str(nonce) + str(self.app_id) + self.api_key
-        signature = hmac.new(str(self.api_secret), str(message), hashlib.sha256).hexdigest()
-
-        headers = {
-            'Access-Nonce': nonce,
-            'Access-Key': self.api_key,
-            'Access-Signature': signature
-        }
+        headers = self.auth_headers
 
         # Build the URL
 
@@ -239,13 +390,13 @@ class CoinGateClient:
             raise CoinGateClientException('"sort_by" must be one of {}'.format(', '.join(ORDER_SORT_TYPES)))
         query = {"per_page": per_page, "page": page, "sort_by": sort_by}
         response = self.api_request('/orders', 'get', params=query)
-        response["orders"] = [CoinGateOrder.from_response_data(item) for item in response["orders"]]
+        response["orders"] = [self.order_class.from_response_data(item) for item in response["orders"]]
         return response
 
     def get_order(self, order_id):
         route = '/orders/{}'.format(order_id)
         response = self.api_request(route, 'get')
-        return CoinGateOrder.from_response_data(response)
+        return self.order_class.from_response_data(response)
 
     def create_order(self, order):
         """Creates a payment order.
@@ -258,7 +409,7 @@ class CoinGateClient:
         """
         route = '/orders'
         response = self.api_request(route, 'post', params=order.to_request_data())
-        return CoinGateOrder.from_response_data(response)
+        return self.order_class.from_response_data(response)
 
     def get_rates(self, category=None, subcategory=None):
         """
@@ -303,3 +454,46 @@ class CoinGateClient:
         if not len(response):
             raise CoinGateClientException("No exchange rate available for the {}{} pair".format(from_, to))
         return float(response)
+
+
+class CoinGateV1Client(CoingateBaseClient):
+    """CoinGate API client.
+    """
+
+    order_class = CoinGateV1Order
+
+    def __init__(self, app_id, api_key, api_secret, env="sandbox"):
+
+        CoingateBaseClient.__init__(app_id, env, api_version=1)
+
+        # Auth
+        self.app_id = app_id
+        self.api_key = api_key
+        self.api_secret = api_secret
+
+    @property
+    def auth_headers(self):
+            nonce = str(int(time.time() * 1e6))
+            message = str(nonce) + str(self.app_id) + self.api_key
+            signature = hmac.new(str(self.api_secret), str(message), hashlib.sha256).hexdigest()
+
+            return {
+                'Access-Nonce': nonce,
+                'Access-Key': self.api_key,
+                'Access-Signature': signature
+            }
+
+
+class CoingateV2Client(CoingateBaseClient):
+
+    order_class = CoinGateV2Order
+
+    def __init__(self, app_id, api_token, env="sandbox"):
+
+        CoingateBaseClient.__init__(app_id, env, 2)
+
+        self.api_token = api_token
+
+    @property
+    def auth_headers(self):
+            return {'Authorization': 'Token {}'.format(self.api_token)}
