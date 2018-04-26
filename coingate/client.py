@@ -67,6 +67,25 @@ class CoinGateV1Order(CoinGateBaseOrder):
     """CoinGate Order.
     """
 
+    fields_translation = {
+        'order_id': {'required': True},
+        'price': {'casting': float, 'required': True},
+        'currency': {'required': True},
+        'title': {'validate': lambda x: x <= 150},
+        'description': {'validate': lambda x: x <= 500},
+        'callback_url': {},
+        'cancel_url': {},
+        'success_url': {},
+        'id': {'property_name': 'coingate_id', 'casting': int},
+        'status': {},
+        'created_at': {'casting': arrow.get},
+        'expire_at': {'casting': arrow.get},
+        'payment_url': {},
+        'btc_amount': {'casting': float},
+        'bitcoin_address': {},
+        'bitcoin_uri': {},
+    }
+
     def __init__(self, order_id, price, currency, receive_currency=None, title=None,
                  description=None, callback_url=None, cancel_url=None,
                  success_url=None, coingate_id=None, status=None,
@@ -128,39 +147,6 @@ class CoinGateV1Order(CoinGateBaseOrder):
             return "<CoinGate Order {} ({})>".format(self.order_id, self.coingate_id)
         return "<CoinGate Order {}>".format(self.order_id)
 
-    @classmethod
-    def from_response_data(cls, rdata):
-        """Creates an CoinGateOrder instance from data returned by the API.
-
-        This is used for creating an instance based on an order that has been
-        created on Coingate. As such, the receive_currency shouldn't be set.
-
-        Args:
-            rdata: a Dict of data returned by the CoinGate API.
-
-        Returns:
-            A CoinGateOrder instance created from the request data.
-        """
-        return cls(
-            rdata["order_id"],
-            rdata["price"],
-            rdata["currency"],
-            receive_currency=None,
-            title=rdata.get("title", None),
-            description=rdata.get("description", None),
-            callback_url=rdata.get("callback_url", None),
-            cancel_url=rdata.get("cancel_url", None),
-            success_url=rdata.get("success_url", None),
-            coingate_id=rdata.get("id", None),
-            status=rdata.get("status", None),
-            created_at=arrow.get(rdata["created_at"]),
-            expire_at=arrow.get(rdata["expire_at"]),
-            payment_url=rdata["payment_url"],
-            btc_amount=rdata["btc_amount"],
-            bitcoin_address=rdata["bitcoin_address"],
-            bitcoin_uri=rdata["bitcoin_uri"]
-        )
-
     def to_request_data(self):
 
         if self.receive_currency is None:
@@ -211,7 +197,7 @@ class CoinGateV2Order(CoinGateBaseOrder):
         'id': {'property_name': 'coingate_id', 'casting': int},
         'status': {},
         'created_at': {'casting': arrow.get},
-        'expire_at': { 'casting': arrow.get},
+        'expire_at': {'casting': arrow.get},
         'payment_url': {},
         'token': {},
         'pay_currency': {},
