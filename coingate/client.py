@@ -206,6 +206,7 @@ class CoinGateV2Order(CoinGateBaseOrder):
         'created_at': {'casting': arrow.get},
         'expire_at': {'casting': arrow.get},
         'payment_url': {},
+        'payment_address': {},
         'token': {},
         'pay_currency': {},
         'pay_amount': {'casting': float},
@@ -214,7 +215,7 @@ class CoinGateV2Order(CoinGateBaseOrder):
     def __init__(self, order_id, price_amount, price_currency, receive_currency, title=None,
                  description=None, callback_url=None, cancel_url=None,
                  success_url=None, coingate_id=None, status=None,
-                 created_at=None, expire_at=None, payment_url=None, token=None,
+                 created_at=None, expire_at=None, payment_address=None, payment_url=None, token=None,
                  pay_currency=None, pay_amount=None):
         """Inits a CoinGateOrder instance/
 
@@ -244,6 +245,7 @@ class CoinGateV2Order(CoinGateBaseOrder):
             created_at: Order creation date. Arrow object.
             expire_at: Order expiration date.
             payment_url: Invoice URL for payment.
+            payment_address: String
             pay_currency: The currency used by the buyer.
             pay_amount: the amount of pay_currency paid by the buyer.
         """
@@ -262,6 +264,7 @@ class CoinGateV2Order(CoinGateBaseOrder):
         self.created_at = created_at
         self.expire_at = expire_at
         self.payment_url = payment_url
+        self.payment_address = payment_address
         self.token = token
         self.pay_currency = pay_currency
         self.pay_amount = pay_amount
