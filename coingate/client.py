@@ -319,6 +319,7 @@ class CoingateBaseClient:
     def __init__(self, app_id, env, api_version=1):
         self.ssl_verify = True
         self.api_version = api_version
+        self.app_id = app_id
         # Construct the base URL for API requests
         if env == "sandbox":
             hostname = SANDBOX_HOSTNAME
@@ -464,7 +465,6 @@ class CoinGateV1Client(CoingateBaseClient):
         CoingateBaseClient.__init__(self, app_id, env, api_version=1)
 
         # Auth
-        self.app_id = app_id
         self.api_key = api_key
         self.api_secret = api_secret
 

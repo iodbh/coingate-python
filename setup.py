@@ -25,7 +25,7 @@ here = path.abspath(path.dirname(__file__))
 
 setup(
     name='coingate',
-    version='0.1.0.dev3',
+    version='0.1.0.dev4',
 
     description='Basic CoinGate API client',
     long_description=long_description,
@@ -56,6 +56,6 @@ setup(
     install_requires=['requests', 'arrow'],
 
     extras_require={
-        'dev': ['pypandoc'],
+        'dev': ['pypandoc', 'pytest'],
     },
 )
