@@ -434,6 +434,24 @@ class CoingateBaseClient:
         if subcategory is not None:
             route = '{}/{}'.format(route, subcategory)
         response = self.api_request(route, 'get')
+        # Convert values to floats
+        if category is None:
+            for cur, rates in response['merchant'].items():
+                for k, v in rates.items():
+                    rates[k] = float(v)
+            for sc in ('buy', 'sell'):
+                for cur, rates in response['trader'][sc].items():
+                    for k, v in rates.items():
+                        rates[k] = float(v)
+        elif category == 'trader' and subcategory is None:
+            for sc in ('buy', 'sell'):
+                for cur, rates in response[sc].items():
+                    for k, v in rates.items():
+                        rates[k] = float(v)
+        else:
+            for cur, rates in response.items():
+                for k, v in rates.items():
+                    rates[k] = float(v)
         return response
 
     def get_rate(self, from_, to):
@@ -494,3 +512,7 @@ class CoinGateV2Client(CoingateBaseClient):
     @property
     def auth_headers(self):
             return {'Authorization': 'Token {}'.format(self.api_token)}
+
+
+class CoinGateClient(CoinGateV2Client):
+    pass

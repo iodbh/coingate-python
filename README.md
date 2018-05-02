@@ -4,6 +4,15 @@ Simple API client for the [CoinGate](https://coingate.com/) service.
 
 ## Usage
 
+### Latest API version
+
+```python
+from coingate.client import CoinGateClient
+```
+
+The `CoinGateClient` class will inherit methods from the latest API's supported
+version client. Currently, it is API V2.
+
 ### API V2
 
 ```python
