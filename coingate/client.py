@@ -461,6 +461,9 @@ class CoingateBaseClient:
         Args:
             from_: symbol of the currency to exchange from
             to: symbol of the currency to exchange to
+            category: rate category to get - either "merchant" or "trader"
+            subcategory: subcategory ("buy" or "sell") to get. To be set only
+              for "trader" rate queries.
 
         Returns:
             CoinGate exchange rate (Float)
