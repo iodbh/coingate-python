@@ -8,6 +8,7 @@ import arrow
 
 from .constants import LIVE_HOSTNAME, SANDBOX_HOSTNAME, ORDER_SORT_TYPES
 from .exceptions import CoinGateAPIException, CoinGateClientException
+from .utils import convert_values
 
 
 class CoinGateBaseOrder:
@@ -436,23 +437,8 @@ class CoingateBaseClient:
             route = '{}/{}'.format(route, subcategory)
         response = self.api_request(route, 'get')
         # Convert values to floats
-        if category is None:
-            for cur, rates in response['merchant'].items():
-                for k, v in rates.items():
-                    rates[k] = float(v)
-            for sc in ('buy', 'sell'):
-                for cur, rates in response['trader'][sc].items():
-                    for k, v in rates.items():
-                        rates[k] = float(v)
-        elif category == 'trader' and subcategory is None:
-            for sc in ('buy', 'sell'):
-                for cur, rates in response[sc].items():
-                    for k, v in rates.items():
-                        rates[k] = float(v)
-        else:
-            for cur, rates in response.items():
-                for k, v in rates.items():
-                    rates[k] = float(v)
+        convert_values(response, float)
+
         return response
 
     def get_rate(self, from_, to, category='merchant', subcategory=None):
