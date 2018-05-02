@@ -149,8 +149,17 @@ class TestV2Client:
             assert isinstance(rates, dict)
             for currency in rates.values():
                 assert all(isinstance(i, float) for i in currency.values())
-        # single rate
+        # single rate, default category
         rate = v2client.get_rate('BTC', 'USD')
+        assert isinstance(rate, float)
+        # single rate, merchant category
+        rate = v2client.get_rate('BTC', 'USD', category='merchant')
+        assert isinstance(rate, float)
+        # single rate - trader, buy
+        rate = v2client.get_rate('BTC', 'USD', category='trader', subcategory='buy')
+        assert isinstance(rate, float)
+        # single rate - trader, sell
+        rate = v2client.get_rate('BTC', 'USD', category='trader', subcategory='sell')
         assert isinstance(rate, float)
 
     def test_invalid_exchange_rates(self, v2client):
@@ -164,7 +173,7 @@ class TestV2Client:
         # - valid subcategory with invalid category
         with pytest.raises(CoinGateClientException):
             v2client.get_rates('merchant', 'buy')
-        # Single rate
+        # Single rate - default category
         # - Invalid "from" currency
         with pytest.raises(CoinGateClientException):
             v2client.get_rate('XXX', 'BTC')
@@ -173,7 +182,40 @@ class TestV2Client:
             v2client.get_rate('BTC', 'XXX')
         # - Invalid "to" and "from" currencies
         with pytest.raises(CoinGateClientException):
-            print(v2client.get_rate('XXX', 'XXX'))
             v2client.get_rate('XXX', 'NOP')
-
+        # Single rate - explicit "merchant" category
+        # - Invalid "from" currency
+        with pytest.raises(CoinGateClientException):
+            v2client.get_rate('XXX', 'BTC', category='merchant')
+        # - Invalid "to" currency
+        with pytest.raises(CoinGateClientException):
+            v2client.get_rate('BTC', 'XXX', category='merchant')
+        # - Invalid "to" and "from" currencies
+        with pytest.raises(CoinGateClientException):
+            v2client.get_rate('XXX', 'NOP',  category='merchant')
+        # - Subcategory incorrectly set
+        with pytest.raises(CoinGateClientException):
+            v2client.get_rate('BTC', 'USD',  category='merchant', subcategory='buy')
+        # Single rate - "trader" category
+        # - Invalid "from" currency
+        with pytest.raises(CoinGateClientException):
+            v2client.get_rate('XXX', 'BTC', category='trader', subcategory='buy')
+        with pytest.raises(CoinGateClientException):
+            v2client.get_rate('XXX', 'BTC', category='trader', subcategory='sell')
+        # - Invalid "to" currency
+        with pytest.raises(CoinGateClientException):
+            v2client.get_rate('BTC', 'XXX', category='trader', subcategory='buy')
+        with pytest.raises(CoinGateClientException):
+            v2client.get_rate('BTC', 'XXX', category='trader', subcategory='sell')
+        # - Invalid "to" and "from" currencies
+        with pytest.raises(CoinGateClientException):
+            v2client.get_rate('XXX', 'NOP', category='trader', subcategory='buy')
+        with pytest.raises(CoinGateClientException):
+            v2client.get_rate('XXX', 'NOP', category='trader', subcategory='sell')
+        # - Incorrect subcategory
+        with pytest.raises(CoinGateClientException):
+            v2client.get_rate('BTC', 'USD', category='trader', subcategory='xxx')
+        # - No subcategory set
+        with pytest.raises(CoinGateClientException):
+            v2client.get_rate('BTC', 'USD', category='trader')
 

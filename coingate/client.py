@@ -454,7 +454,7 @@ class CoingateBaseClient:
                     rates[k] = float(v)
         return response
 
-    def get_rate(self, from_, to):
+    def get_rate(self, from_, to, category='merchant', subcategory=None):
         """
         Gets the CoingGate's exchange rate for a currency pair.
 
@@ -465,7 +465,17 @@ class CoingateBaseClient:
         Returns:
             CoinGate exchange rate (Float)
         """
-        route = '/rates/merchant/{}/{}'.format(from_, to)
+        if category not in ('merchant', 'trader'):
+            raise CoinGateClientException('Rate category must be "merchant" or "trader"')
+        base_route = '/rates/{}'.format(category)
+        if category == 'merchant':
+            if subcategory is not None:
+                raise CoinGateClientException('The "merchant" category doesn\'t support a subcategory')
+            route = '/{}/{}/{}'.format(base_route, from_, to)
+        elif category == 'trader':
+            if subcategory is None or subcategory not in ('buy', 'sell'):
+                raise CoinGateClientException('The subcategory must be either "buy" or "sell"')
+            route = '{}/{}/{}/{}'.format(base_route, subcategory, from_, to)
         response = self.api_request(route, 'get', raw=True)
         if not len(response):
             raise CoinGateClientException("No exchange rate available for the {}{} pair".format(from_, to))
