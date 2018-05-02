@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import time
 from urlparse import urlunparse, urljoin
+import warnings
 import requests
 import arrow
 
@@ -492,6 +493,7 @@ class CoinGateV1Client(CoingateBaseClient):
     order_class = CoinGateV1Order
 
     def __init__(self, app_id, api_key, api_secret, env="sandbox"):
+        warnings.warn("The Coingate API V1 is deprecated, please migrate to API V2", DeprecationWarning)
 
         CoingateBaseClient.__init__(self, app_id, env, api_version=1)
 
